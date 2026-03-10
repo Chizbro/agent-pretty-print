@@ -1,0 +1,21 @@
+{
+  "name": "agent-pretty-print",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Parse and format JSONL log files with TUI and file output",
+  "main": "parse-log.ts",
+  "scripts": {
+    "parse": "tsx parse-log.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "ink": "^4.4.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
