@@ -21,46 +21,44 @@ npm install agent-pretty-print
 npx agent-pretty-print [options] [file]
 ```
 
-**From source (development):**
-
-```bash
-git clone https://github.com/Chizbro/agent-pretty-print.git && cd agent-pretty-print
-npm install
-npm run build
-npm start -- [options] [file]
-```
 
 ## Usage
 
-Run the CLI:
+**Pipe JSONL in** (most common):
 
 ```bash
-agent-pretty-print [options] [file]
+cat agent.log | agent-pretty-print
+something-that-outputs-jsonl | agent-pretty-print -o report.md
 ```
 
-Or with `npx` if installed locally:
+**Or pass a file:**
 
 ```bash
-npx agent-pretty-print [options] [file]
+agent-pretty-print path/to/log.jsonl
+agent-pretty-print path/to/log.jsonl -o report.md
+```
+
+If you installed it as a project dependency, use `npx`:
+
+```bash
+cat agent.log | npx agent-pretty-print
+npx agent-pretty-print path/to/log.jsonl
 ```
 
 ### Input
 
-- **File:** Path to a JSONL file (one JSON object per line).
-- **Stdin:** Omit the file (or use `-`) and pipe JSONL in:
-  ```bash
-  cat agent.log | npm run parse --
-  ```
+- **Stdin:** Pipe JSONL into the command (omit the file argument or use `-`).
+- **File:** Pass the path as the first argument.
 
 ### Output modes
 
 | Scenario | Result |
 |----------|--------|
-| `parse-log <file>` (TTY) | **Interactive TUI** — browse sessions, messages, tool calls. Press **q** to quit. |
-| `parse-log <file> -o out.md` | Write **markdown** to `out.md` (no TUI). |
-| `parse-log <file> -w` | **Watch** the file; TUI updates as new lines are appended. |
-| `command \| parse-log` | Read from **stdin**; TUI renders (non-interactive), then exits. |
-| `command \| parse-log -o out.md` | Stdin → **markdown** file. |
+| `agent-pretty-print <file>` (TTY) | **Interactive TUI** — browse sessions, messages, tool calls. Press **q** to quit. |
+| `agent-pretty-print <file> -o out.md` | Write **markdown** to `out.md` (no TUI). |
+| `agent-pretty-print <file> -w` | **Watch** the file; TUI updates as new lines are appended. |
+| `command \| agent-pretty-print` | Read from **stdin**; TUI renders (non-interactive), then exits. |
+| `command \| agent-pretty-print -o out.md` | Stdin → **markdown** file. |
 
 When stdout is not a TTY (e.g. in a pipe or CI), TUI is disabled unless you pass `-t`. Use `-o <path>` to write markdown instead.
 
@@ -78,23 +76,26 @@ When stdout is not a TTY (e.g. in a pipe or CI), TUI is disabled unless you pass
 ## Examples
 
 ```bash
-# Interactive TUI for a log file
-npm run parse -- logs/readme
+# Pipe a log file into the TUI
+cat agent.jsonl | agent-pretty-print
+
+# Pipe to markdown
+cat agent.jsonl | agent-pretty-print -o report.md
+
+# Interactive TUI for a file
+agent-pretty-print path/to/log.jsonl
 
 # Write markdown report
-npm run parse -- logs/readme -o report.md
+agent-pretty-print path/to/log.jsonl -o report.md
 
 # Watch a live log (e.g. while an agent runs)
-npm run parse -- /path/to/live.log -w
+agent-pretty-print /path/to/live.log -w
 
 # Only sessions with errors
-npm run parse -- logs/readme -e -o errors.md
+agent-pretty-print path/to/log.jsonl -e -o errors.md
 
 # Single session
-npm run parse -- logs/readme -s 5a5c2d32-6863-47f6-ac2e-c55f5143938d
-
-# From stdin to markdown
-cat agent.jsonl | npm run parse -- -o report.md
+agent-pretty-print path/to/log.jsonl -s 5a5c2d32-6863-47f6-ac2e-c55f5143938d
 ```
 
 ## Input format (JSONL)
