@@ -201,7 +201,7 @@ interface AppProps {
 function App({ sessions, interactive }: AppProps) {
   const { exit } = useApp();
 
-  useInput((input, key) => {
+  useInput((input: string, key: { escape?: boolean }) => {
     if (interactive && (input === 'q' || key.escape)) {
       exit();
     }
