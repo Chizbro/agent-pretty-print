@@ -5,32 +5,43 @@ Parse and format **JSONL log files** (e.g. Cursor/agent session logs) into a hum
 ## Prerequisites
 
 - **Node.js** (v18+)
-- **tsx** (TypeScript runner) — install globally or use via `npx`
 
 ## Install
 
+**As a global CLI (recommended):**
+
 ```bash
+npm install -g agent-pretty-print
+```
+
+**As a project dependency:**
+
+```bash
+npm install agent-pretty-print
+npx agent-pretty-print [options] [file]
+```
+
+**From source (development):**
+
+```bash
+git clone https://github.com/Chizbro/agent-pretty-print.git && cd agent-pretty-print
 npm install
+npm run build
+npm start -- [options] [file]
 ```
 
 ## Usage
 
-Run the parser with either:
+Run the CLI:
 
 ```bash
-npm run parse -- [options] [file]
+agent-pretty-print [options] [file]
 ```
 
-or the wrapper script (resolves paths from your current directory):
+Or with `npx` if installed locally:
 
 ```bash
-./parse-log.sh [options] [file]
-```
-
-If you use `tsx` directly, pass the log file path and any options:
-
-```bash
-tsx parse-log.ts [options] [file]
+npx agent-pretty-print [options] [file]
 ```
 
 ### Input

@@ -1,12 +1,26 @@
 {
   "name": "agent-pretty-print",
   "version": "2.0.0",
-  "type": "module",
   "description": "Parse and format JSONL log files with TUI and file output",
+  "type": "module",
   "main": "dist/parse-log.js",
   "bin": {
     "agent-pretty-print": "./dist/parse-log.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Chizbro/agent-pretty-print.git"
+  },
+  "keywords": [
+    "jsonl",
+    "log",
+    "parser",
+    "cursor",
+    "agent",
+    "tui",
+    "markdown"
+  ],
+  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "prepare": "node -e \"require('fs').existsSync('dist/parse-log.js') || require('child_process').execSync('npm run build', { stdio: 'inherit' })\"",
@@ -15,11 +29,12 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "README.md",
+    "LICENSE"
   ],
   "dependencies": {
     "commander": "^12.1.0",
-    "dist": "^0.1.2",
     "ink": "^4.4.1",
     "react": "^18.3.1"
   },
