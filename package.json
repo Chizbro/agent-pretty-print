@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "node -e \"require('fs').existsSync('dist/parse-log.js') || require('child_process').execSync('npm run build', { stdio: 'inherit' })\"",
+    "start": "node dist/parse-log.js",
     "parse": "tsx parse-log.ts"
   },
   "files": [
