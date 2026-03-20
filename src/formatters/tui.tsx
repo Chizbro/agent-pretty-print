@@ -142,12 +142,15 @@ function ResultBlock({ result }: { result: any }) {
   const sub = result.subtype || 'unknown';
   const dur = result.duration_ms ? fmtDur(result.duration_ms) : '';
   const isErr = result.is_error;
+  const cost = result.total_cost_usd != null ? `$${result.total_cost_usd.toFixed(4)}` : '';
+  const turns = result.num_turns != null ? `${result.num_turns} turn${result.num_turns !== 1 ? 's' : ''}` : '';
+  const meta = [dur, cost, turns].filter(Boolean).join('  ·  ');
   return (
     <Box marginTop={1}>
       <Text bold color={isErr ? 'red' : 'green'}>
         {isErr ? '✗' : '✔'} Result: {sub}
       </Text>
-      {dur ? <Text dimColor>  ({dur})</Text> : null}
+      {meta ? <Text dimColor>  ({meta})</Text> : null}
     </Box>
   );
 }

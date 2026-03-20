@@ -41,12 +41,25 @@ export class SessionAggregator {
       if (event.permissionMode) session.permissionMode = event.permissionMode;
     }
 
+    // Claude assistant messages carry the model inside message.model
+    if (event.type === 'assistant' && !session.model && event.message?.model) {
+      session.model = event.message.model;
+    }
+
     // --- startTime = earliest timestamp, endTime = latest ---
     if (event.timestamp_ms) {
       if (!session.startTime || event.timestamp_ms < session.startTime) {
         session.startTime = event.timestamp_ms;
       }
       session.endTime = Math.max(session.endTime || 0, event.timestamp_ms);
+    }
+
+    // Claude result events carry duration but no timestamps —
+    // synthesize endTime so session duration renders correctly.
+    if (event.type === 'result' && event.duration_ms && !session.endTime) {
+      if (session.startTime) {
+        session.endTime = session.startTime + event.duration_ms;
+      }
     }
 
     // --- delegate to sub-aggregators ---
@@ -59,6 +72,7 @@ export class SessionAggregator {
     if (event.type === 'result') {
       session.results.push(event);
     }
+    // rate_limit_event — skip (informational only)
   }
 
   getSessions(): Map<string, Session> {

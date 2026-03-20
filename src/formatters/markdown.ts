@@ -68,9 +68,12 @@ export class MarkdownFormatter {
     for (const r of s.results) {
       out.push('');
       const sub = r.subtype || 'unknown';
-      const dur = r.duration_ms ? ` (${fmtDur(r.duration_ms)})` : '';
+      const dur = r.duration_ms ? fmtDur(r.duration_ms) : '';
+      const cost = r.total_cost_usd != null ? `$${r.total_cost_usd.toFixed(4)}` : '';
+      const turns = r.num_turns != null ? `${r.num_turns} turn${r.num_turns !== 1 ? 's' : ''}` : '';
+      const meta = [dur, cost, turns].filter(Boolean).join(' · ');
       const err = r.is_error ? ' **ERROR**' : '';
-      out.push(`## Result: ${sub}${dur}${err}`);
+      out.push(`## Result: ${sub}${meta ? ` (${meta})` : ''}${err}`);
       if (r.result) {
         const txt = typeof r.result === 'string' ? r.result : JSON.stringify(r.result, null, 2);
         if (txt.length > 800) {

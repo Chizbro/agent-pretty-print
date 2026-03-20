@@ -8,6 +8,7 @@
 import type { LogEvent, ToolCall } from './types.js';
 
 const TOOL_LABELS: Record<string, string> = {
+  // Cursor tool names
   readToolCall: 'Read',
   lsToolCall: 'List',
   editToolCall: 'Edit',
@@ -18,6 +19,34 @@ const TOOL_LABELS: Record<string, string> = {
   searchToolCall: 'Search',
   globToolCall: 'Glob',
   grepToolCall: 'Grep',
+  // Claude Code tool names (already human-readable, but normalize casing)
+  Bash: 'Shell',
+  Read: 'Read',
+  Edit: 'Edit',
+  Write: 'Write',
+  Glob: 'Glob',
+  Grep: 'Grep',
+  Skill: 'Skill',
+  Agent: 'Agent',
+  WebFetch: 'Web Fetch',
+  WebSearch: 'Web Search',
+  NotebookEdit: 'Notebook Edit',
+  TodoWrite: 'Todos',
+  TaskCreate: 'Task Create',
+  TaskUpdate: 'Task Update',
+  TaskGet: 'Task Get',
+  TaskList: 'Task List',
+  TaskOutput: 'Task Output',
+  TaskStop: 'Task Stop',
+  ToolSearch: 'Tool Search',
+  AskUserQuestion: 'Ask User',
+  EnterPlanMode: 'Plan Mode',
+  ExitPlanMode: 'Exit Plan',
+  EnterWorktree: 'Worktree',
+  ExitWorktree: 'Exit Worktree',
+  CronCreate: 'Cron Create',
+  CronDelete: 'Cron Delete',
+  CronList: 'Cron List',
 };
 
 export class ToolCallAggregator {

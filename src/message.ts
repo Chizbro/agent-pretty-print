@@ -28,11 +28,14 @@ export class MessageReconstructor {
       // Use a synthetic key so they aren't dropped.
       key = `user-${sessionId}`;
     } else if (event.model_call_id) {
-      // Assistant streaming chunks keyed by model_call_id.
+      // Assistant streaming chunks keyed by model_call_id (Cursor).
       key = event.model_call_id;
+    } else if (event.message?.id) {
+      // Claude Code assistant messages use message.id instead of model_call_id.
+      key = event.message.id;
     } else {
-      // Assistant messages without model_call_id are early previews
-      // that get re-emitted with a model_call_id moments later. Skip.
+      // Assistant messages without any id are early previews
+      // that get re-emitted with an id moments later. Skip.
       return;
     }
 
@@ -46,7 +49,7 @@ export class MessageReconstructor {
     if (!message) {
       message = {
         key,
-        modelCallId: event.model_call_id,
+        modelCallId: event.model_call_id || event.message?.id,
         role: event.message.role ?? (event.type === 'user' ? 'user' : 'assistant'),
         chunks: [],
         fullText: '',

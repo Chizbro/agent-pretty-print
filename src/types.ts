@@ -3,15 +3,17 @@
  */
 
 export interface LogEvent {
-  type: 'system' | 'user' | 'assistant' | 'tool_call' | 'result' | 'thinking';
+  type: 'system' | 'user' | 'assistant' | 'tool_call' | 'result' | 'thinking' | 'rate_limit_event';
   subtype?: string;
   session_id: string;
   timestamp_ms?: number;
   model_call_id?: string;
   call_id?: string;
   message?: {
+    id?: string;
     role: 'user' | 'assistant';
-    content: Array<{ type: string; text?: string; [key: string]: any }>;
+    content: Array<{ type: string; text?: string; thinking?: string; [key: string]: any }>;
+    [key: string]: any;
   };
   tool_call?: {
     [toolName: string]: {
