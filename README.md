@@ -72,6 +72,7 @@ When stdout is not a TTY (e.g. in a pipe or CI), TUI is disabled unless you pass
 | `-w, --watch` | Watch the log file for new lines and refresh (use with TUI or `-o`). |
 | `-s, --session-id <id>` | Show only the session with this ID. |
 | `-e, --errors-only` | Show only sessions that contain errors (tool or result errors). |
+| `--synthetic-timestamps` | Generate synthetic timestamps when log events do not provide any. |
 
 ## Examples
 

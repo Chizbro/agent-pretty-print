@@ -26,6 +26,19 @@ function fmtDur(ms: number): string {
   return rm ? `${h}h ${rm}m` : `${h}h`;
 }
 
+function fmtTs(ts?: number): string {
+  if (!ts || ts <= 0) return '';
+  return new Date(ts).toISOString();
+}
+
+function fmtTsLabel(ts?: number): string {
+  return fmtTs(ts) || 'no-timestamp';
+}
+
+function resolveMessageTs(message: Message, session: Session): number | undefined {
+  return message.startTime || message.endTime || session.startTime || session.endTime;
+}
+
 function shorten(path: string, cwd?: string): string {
   if (cwd && path.startsWith(cwd)) {
     const s = path.slice(cwd.length);
@@ -61,10 +74,12 @@ function groupTCByModelCall(s: Session): Map<string, ToolCall[]> {
 function SessionHeader({ session: s }: { session: Session }) {
   const id = s.id.substring(0, 8);
   const dur = (s.endTime && s.startTime) ? fmtDur(s.endTime - s.startTime) : 'running';
+  const tsLabel = fmtTsLabel(s.startTime || s.endTime);
   return (
     <Box borderStyle="round" borderColor="blue" paddingX={1} flexDirection="column">
       <Text>
         <Text bold color="blue">Session {id}</Text>
+        <Text dimColor> [{tsLabel}]</Text>
         <Text dimColor>  ·  </Text>
         <Text>{s.model || '?'}</Text>
         <Text dimColor>  ·  </Text>
@@ -75,12 +90,16 @@ function SessionHeader({ session: s }: { session: Session }) {
   );
 }
 
-function UserBlock({ message }: { message: Message }) {
+function UserBlock({ message, session }: { message: Message; session: Session }) {
   const text = (message.fullText || '').trim();
   const preview = text.length > 300 ? text.substring(0, 300) + '…' : text;
+  const tsLabel = fmtTsLabel(resolveMessageTs(message, session));
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Text bold color="green">▶ User</Text>
+      <Text bold color="green">
+        ▶ User
+        <Text dimColor> [{tsLabel}]</Text>
+      </Text>
       <Box marginLeft={2}><Text wrap="wrap">{preview || '(empty)'}</Text></Box>
     </Box>
   );
@@ -108,17 +127,22 @@ function ToolCallLine({ tc, cwd, last }: { tc: ToolCall; cwd?: string; last: boo
   );
 }
 
-function AssistantBlock({ message, toolCalls, cwd }: {
+function AssistantBlock({ message, session, toolCalls, cwd }: {
   message: Message;
+  session: Session;
   toolCalls: ToolCall[];
   cwd?: string;
 }) {
   const text = (message.fullText || '').trim();
   const preview = text.length > 500 ? text.substring(0, 500) + '…' : text;
+  const tsLabel = fmtTsLabel(resolveMessageTs(message, session));
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Text bold color="cyan">◀ Assistant</Text>
+      <Text bold color="cyan">
+        ◀ Assistant
+        <Text dimColor> [{tsLabel}]</Text>
+      </Text>
       {preview ? (
         <Box marginLeft={2}><Text wrap="wrap">{preview}</Text></Box>
       ) : null}
@@ -138,17 +162,19 @@ function AssistantBlock({ message, toolCalls, cwd }: {
   );
 }
 
-function ResultBlock({ result }: { result: any }) {
+function ResultBlock({ result, session }: { result: any; session: Session }) {
   const sub = result.subtype || 'unknown';
   const dur = result.duration_ms ? fmtDur(result.duration_ms) : '';
   const isErr = result.is_error;
   const cost = result.total_cost_usd != null ? `$${result.total_cost_usd.toFixed(4)}` : '';
   const turns = result.num_turns != null ? `${result.num_turns} turn${result.num_turns !== 1 ? 's' : ''}` : '';
   const meta = [dur, cost, turns].filter(Boolean).join('  ·  ');
+  const tsLabel = fmtTsLabel(result.timestamp_ms || session.endTime || session.startTime);
   return (
     <Box marginTop={1}>
       <Text bold color={isErr ? 'red' : 'green'}>
         {isErr ? '✗' : '✔'} Result: {sub}
+        <Text dimColor> [{tsLabel}]</Text>
       </Text>
       {meta ? <Text dimColor>  ({meta})</Text> : null}
     </Box>
@@ -158,22 +184,30 @@ function ResultBlock({ result }: { result: any }) {
 function SessionView({ session }: { session: Session }) {
   const msgs = [...session.messages.values()].sort((a, b) => a.startTime - b.startTime);
   const tcByMC = groupTCByModelCall(session);
-
-  const userMsgs = msgs.filter(m => m.role === 'user');
-  const assistantMsgs = msgs.filter(m => m.role === 'assistant');
+  const orphanTs = fmtTs(
+    (tcByMC.get('_orphan') || []).reduce((min, tc) => {
+      if (!tc.startedAt) return min;
+      return !min || tc.startedAt < min ? tc.startedAt : min;
+    }, 0 as number),
+  );
+  const orphanTsLabel = orphanTs || 'no-timestamp';
 
   return (
     <Box flexDirection="column" marginBottom={1}>
       <SessionHeader session={session} />
 
-      {userMsgs.map((m, i) => <UserBlock key={`u${i}`} message={m} />)}
-
-      {assistantMsgs.map((m) => {
+      {msgs.map((m) => {
+        if (m.role === 'user') {
+          return <UserBlock key={m.key} message={m} session={session} />;
+        }
         const tcs = m.modelCallId ? (tcByMC.get(m.modelCallId) || []) : [];
+        const hasText = (m.fullText || '').trim().length > 0;
+        if (!hasText && tcs.length === 0) return null;
         return (
           <AssistantBlock
             key={m.key}
             message={m}
+            session={session}
             toolCalls={tcs}
             cwd={session.cwd}
           />
@@ -182,14 +216,17 @@ function SessionView({ session }: { session: Session }) {
 
       {(tcByMC.get('_orphan') || []).length > 0 && (
         <Box flexDirection="column" marginTop={1} marginLeft={2}>
-          <Text bold dimColor>Other Tool Calls</Text>
+          <Text bold dimColor>
+            Other Tool Calls
+            <Text dimColor> [{orphanTsLabel}]</Text>
+          </Text>
           {(tcByMC.get('_orphan') || []).map((tc, i, arr) => (
             <ToolCallLine key={tc.id} tc={tc} cwd={session.cwd} last={i === arr.length - 1} />
           ))}
         </Box>
       )}
 
-      {session.results.map((r, i) => <ResultBlock key={`r${i}`} result={r} />)}
+      {session.results.map((r, i) => <ResultBlock key={`r${i}`} result={r} session={session} />)}
     </Box>
   );
 }

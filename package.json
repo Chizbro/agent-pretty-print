@@ -1,6 +1,6 @@
 {
   "name": "agent-pretty-print",
-  "version": "2.0.0",
+  "version": "3.1.1",
   "description": "Parse and format JSONL log files with TUI and file output",
   "type": "module",
   "main": "dist/parse-log.js",

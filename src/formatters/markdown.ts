@@ -19,7 +19,8 @@ export class MarkdownFormatter {
     const out: string[] = [];
 
     // header
-    out.push(`# Session \`${s.id.substring(0, 8)}\``);
+    const sessionTs = fmtTsLabel(s.startTime || s.endTime);
+    out.push(`# Session \`${s.id.substring(0, 8)}\` [${sessionTs}]`);
     const meta: string[] = [];
     if (s.model) meta.push(`**Model:** ${s.model}`);
     if (s.startTime) meta.push(`**Started:** ${new Date(s.startTime).toISOString()}`);
@@ -32,14 +33,18 @@ export class MarkdownFormatter {
     const tcByMC = groupToolCallsByModelCall(s);
 
     for (const msg of msgs) {
+      const text = msg.fullText.trim();
+      const tcs = msg.modelCallId ? (tcByMC.get(msg.modelCallId) || []) : [];
+
+      // Skip empty messages (e.g. whitespace-only streaming deltas)
+      if (!text && tcs.length === 0 && msg.role === 'assistant') continue;
+
       out.push('');
       const label = msg.role === 'user' ? '## User' : '## Assistant';
-      out.push(label);
-      const text = msg.fullText.trim();
+      const msgTs = fmtTsLabel(resolveMessageTs(msg, s));
+      out.push(`${label} [${msgTs}]`);
       if (text) out.push(text);
 
-      // tool calls belonging to this model call
-      const tcs = msg.modelCallId ? (tcByMC.get(msg.modelCallId) || []) : [];
       if (tcs.length) {
         out.push('');
         out.push('| Status | Tool | Argument | Duration |');
@@ -57,7 +62,11 @@ export class MarkdownFormatter {
     const orphans = tcByMC.get('_orphan') || [];
     if (orphans.length) {
       out.push('');
-      out.push('## Other Tool Calls');
+      const orphanTs = fmtTsLabel(orphans.reduce((min, tc) => {
+        if (!tc.startedAt) return min;
+        return !min || tc.startedAt < min ? tc.startedAt : min;
+      }, 0 as number));
+      out.push(`## Other Tool Calls [${orphanTs}]`);
       for (const tc of orphans) {
         const status = tc.error ? '✗' : tc.completedAt ? '✓' : '⏳';
         out.push(`- ${status} **${tc.name}** \`${summarizeArg(tc, s.cwd)}\` ${tc.duration != null ? fmtDur(tc.duration) : ''}`);
@@ -73,7 +82,8 @@ export class MarkdownFormatter {
       const turns = r.num_turns != null ? `${r.num_turns} turn${r.num_turns !== 1 ? 's' : ''}` : '';
       const meta = [dur, cost, turns].filter(Boolean).join(' · ');
       const err = r.is_error ? ' **ERROR**' : '';
-      out.push(`## Result: ${sub}${meta ? ` (${meta})` : ''}${err}`);
+      const resultTs = fmtTsLabel(r.timestamp_ms || s.endTime || s.startTime);
+      out.push(`## Result: ${sub} [${resultTs}]${meta ? ` (${meta})` : ''}${err}`);
       if (r.result) {
         const txt = typeof r.result === 'string' ? r.result : JSON.stringify(r.result, null, 2);
         if (txt.length > 800) {
@@ -123,6 +133,19 @@ function shorten(path: string, cwd?: string): string {
     return s.startsWith('/') ? s.slice(1) : s;
   }
   return path;
+}
+
+function fmtTs(ts?: number): string {
+  if (!ts || ts <= 0) return '';
+  return new Date(ts).toISOString();
+}
+
+function fmtTsLabel(ts?: number): string {
+  return fmtTs(ts) || 'no-timestamp';
+}
+
+function resolveMessageTs(msg: Message, s: Session): number | undefined {
+  return msg.startTime || msg.endTime || s.startTime || s.endTime;
 }
 
 function fmtDur(ms: number): string {
