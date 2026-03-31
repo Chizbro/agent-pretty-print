@@ -130,6 +130,13 @@ export class LogParser {
 
     try {
       const event = JSON.parse(trimmed) as LogEvent;
+      // Claude logs often use ISO `timestamp` instead of `timestamp_ms`.
+      if (!event.timestamp_ms && typeof event.timestamp === 'string') {
+        const parsed = Date.parse(event.timestamp);
+        if (Number.isFinite(parsed)) {
+          event.timestamp_ms = parsed;
+        }
+      }
       this.aggregator.addEvent(event);
       return true;
     } catch {

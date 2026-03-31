@@ -7,6 +7,7 @@ export interface LogEvent {
   subtype?: string;
   session_id: string;
   timestamp_ms?: number;
+  timestamp?: string;
   model_call_id?: string;
   call_id?: string;
   message?: {

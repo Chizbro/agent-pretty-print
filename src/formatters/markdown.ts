@@ -73,6 +73,17 @@ export class MarkdownFormatter {
       }
     }
 
+    const progressEvents = s.events.filter(
+      (e) => e.type === 'system' && e.subtype === 'task_progress' && typeof e.description === 'string',
+    );
+    if (progressEvents.length) {
+      out.push('');
+      out.push('## Progress');
+      for (const e of progressEvents.slice(-20)) {
+        out.push(`- … ${String(e.description)}`);
+      }
+    }
+
     // results
     for (const r of s.results) {
       out.push('');

@@ -87,9 +87,10 @@ export class ToolCallAggregator {
         tc.duration = tc.completedAt - tc.startedAt;
       }
       tc.result = this.extractResult(event);
-      // Fixed: was `'success' in obj === false` (precedence bug)
-      if (tc.result && typeof tc.result === 'object' && 'error' in tc.result) {
-        tc.error = true;
+      if (tc.result && typeof tc.result === 'object') {
+        const resultObj = tc.result as { error?: unknown; is_error?: unknown };
+        if ('error' in resultObj) tc.error = Boolean(resultObj.error);
+        if ('is_error' in resultObj) tc.error = Boolean(resultObj.is_error);
       }
     }
   }

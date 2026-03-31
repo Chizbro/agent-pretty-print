@@ -191,6 +191,9 @@ function SessionView({ session }: { session: Session }) {
     }, 0 as number),
   );
   const orphanTsLabel = orphanTs || 'no-timestamp';
+  const progressEvents = session.events.filter(
+    (e) => e.type === 'system' && e.subtype === 'task_progress' && typeof e.description === 'string',
+  );
 
   return (
     <Box flexDirection="column" marginBottom={1}>
@@ -222,6 +225,17 @@ function SessionView({ session }: { session: Session }) {
           </Text>
           {(tcByMC.get('_orphan') || []).map((tc, i, arr) => (
             <ToolCallLine key={tc.id} tc={tc} cwd={session.cwd} last={i === arr.length - 1} />
+          ))}
+        </Box>
+      )}
+
+      {progressEvents.length > 0 && (
+        <Box flexDirection="column" marginTop={1} marginLeft={2}>
+          <Text bold dimColor>Progress</Text>
+          {progressEvents.slice(-8).map((e, i) => (
+            <Text key={`p${i}`} dimColor>
+              … {String(e.description)}
+            </Text>
           ))}
         </Box>
       )}
